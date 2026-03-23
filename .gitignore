@@ -2,6 +2,7 @@
 .RData
 .RDataTmp*
 .DS_Store
+.Rhistory
 
 # Bioinformatics outputs
 salmon_output/
