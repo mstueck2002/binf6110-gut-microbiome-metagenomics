@@ -5,11 +5,11 @@
 #SBATCH --time=00:15:00
 #SBATCH --output=kraken_biom.out
 
-#Set paths
+#set paths
 REPORT_DIR="$SCRATCH/bracken_output"
 OUT_FILE="$SCRATCH/bracken.biom"
 
-#Run kraken-biom from source
+#run kraken-biom from source
 $HOME/biom_env/bin/kraken-biom \
   "$REPORT_DIR"/*_bracken_species.report \
   -o "$OUT_FILE" \
