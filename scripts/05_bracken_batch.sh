@@ -24,7 +24,7 @@ sample=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$SAMPLE_LIST")
 #define input report file
 REPORT_FILE="${REPORT_DIR}/${sample}.report"
 
-#run Bracken
+#run Bracken in parallel arrays
 bracken \
   -d "$DB_DIR" \
   -i "$REPORT_FILE" \
