@@ -37,3 +37,11 @@ Beta diversity was assessed in R using the *Phyloseq* package to evaluate differ
 Differential abundance analysis was performed to identify taxa associated with habitual diet using ANCOM-BC2 (Analysis of Compositions of Microbiomes with Bias Correction), which accounts for the compositional structure of microbiome datasets and corrects for biases in sequencing data while controlling false discovery rates [10]. Analyses were conducted in R using the *ANCOMBC* package on the phyloseq object. Although abundance estimates were initially generated at the species level, taxa were aggregated at the genus level (Rank6) for differential analysis to improve robustness and reduce sparsity. The model included diet as a fixed effect (fix_formula = "Diet"), and no random effects were specified. Multiple testing correction was applied using the Holm method to attempt to tightly control against false positives common in DA methods. [14] Structural zeros were identified and incorporated into the model, and sensitivity analysis with pseudo-count addition was enabled. Low-prevalence and low-depth features were filtered using a prevalence cutoff of 0.1 and a library size cutoff of 1000 reads. Additional parameters included s0_perc = 0.05 to stabilize variance estimates and neg_lb = TRUE to ensure conservative inference based on lower-bound estimates. Differentially abundant taxa were identified for each dietary contrast by filtering results for Holm-adjusted p-values < 0.05.
 
 ## Results 
+
+### Sequencing Data Quality and Characteristics
+
+Analysis of publicly available gut microbiome samples from 74 healthy Italian adults, sequenced using an Illumina NextSeq 500, yielded 74 paired-end datasets totalling 304.14 Gb of data. Across all samples, FastQC analysis indicated a mean sequencing depth of 34.65 million reads per sample, with an average read length of 149.35 base pairs and a mean GC content of 50.15%. Per-base sequence quality was consistently high, with mean Phred scores ≥ 27.11 across all positions, and no detectable adapter contamination was observed. Expected Illumina WGS-specific biases were observed in analysis results, including elevated per-base sequence content and per-sequence GC content, consistent with Illumina library prep coverage biases. [15]
+
+
+
+
