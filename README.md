@@ -108,4 +108,17 @@ Beta diversity analysis using Bray-Curtis and Jaccard distance metrics revealed 
   </small>
 </p>
 
+### Dietary Differential Microbial Abundance 
+
+Genus-level differential abundance analysis using ANCOM-BC2, with diet modelled as a fixed effect and Holm correction applied, identified a limited number of significant associations. Endlipuvirus was differentially abundant between omnivorous and vegan groups (q = 0.0155), while both Endlipuvirus and Birpovirus differed between omnivorous and vegetarian groups (q = 0.0003 and q = 0.0009). (Figure 8)
+
+<p align="center">
+  <img src="figures/F8.volcanos.png" width="800">
+</p>
+
+<p align="center">
+  <small>
+    <b>Figure 6. Beta Diversity Principal coordinates analysis. </b> Differential abundance was assessed using ANCOM-BC2 with diet modelled as a fixed effect and Holm-adjusted p-values. The left panel shows vegans compared to omnivores, while the right panel shows vegetarians compared to omnivores. The x-axis represents log₂ fold change, and the y-axis represents −log₁₀(p-value). Genera are coloured according to significance (q ≤ 0.05), with significant taxa shown in green (vegan comparison) or blue (vegetarian comparison), and non-significant taxa in gray. <i>Endlipuvirus</i> was the only genus differentially abundant between omnivorous and vegan groups, while both <i>Endlipuvirus</i> and <i>Birpovirus</i> were differentially abundant between omnivorous and vegetarian groups.
+    </small>
+</p>
 
