@@ -20,17 +20,18 @@ library(ggplot2)
 library(readxl)
 library(biomformat)
 library(microbiome)
+library(ggrepel)
 ```
 
 ###data import
 
 ```{r}
 #import biom
-biom_data <- read_biom("bracken.biom")
+biom_data <- read_biom("output_files/bracken.biom")
 physeq <- import_biom(biom_data)
 
 #import metadata
-meta <- read_excel("diet_metadata.xlsx")
+meta <- read_excel("input_files/diet_metadata.xlsx")
 meta <- as.data.frame(meta)
 colnames(meta) <- c("Sample", "Diet")
 rownames(meta) <- meta$Sample
@@ -246,6 +247,46 @@ sig_vegan <- ancombc.out$res %>%
 sig_vegetarian<- ancombc.out$res %>%
   filter(q_Dietvegetarian < 0.05) %>%
   select(taxon, lfc_Dietvegetarian, p_Dietvegetarian, q_Dietvegetarian)
+
+#Vegan vs omnivore
+volcano_vegan <- ancombc.out$res %>%
+  mutate(
+    logFC = lfc_Dietvegan,
+    negLogP = -log10(p_Dietvegan),
+    significant = q_Dietvegan < 0.05
+  )
+
+#Vegetarian vs omnivore
+volcano_vegetarian <- ancombc.out$res %>%
+  mutate(
+    logFC = lfc_Dietvegetarian,
+    negLogP = -log10(p_Dietvegetarian),
+    significant = q_Dietvegetarian < 0.05
+  )
+
+#Plot vegan vs omnivore
+ggplot(volcano_vegan, aes(x = logFC, y = negLogP)) +
+  geom_point(aes(color = significant), alpha = 0.8, size = 3) +
+  geom_text_repel(
+    data = subset(volcano_vegan, significant),
+    aes(label = taxon),
+    size = 5,
+    max.overlaps = 20
+  ) +
+  scale_color_manual(values = c("grey", "#00BA38")) +
+  theme_minimal()
+
+#Plot vegetarian vs omnivore
+ggplot(volcano_vegetarian, aes(x = logFC, y = negLogP)) +
+  geom_point(aes(color = significant), alpha = 0.8, size = 3) +
+  geom_text_repel(
+    data = subset(volcano_vegetarian, significant),
+    aes(label = taxon),
+    size = 5,
+    max.overlaps = 20
+  ) +
+  scale_color_manual(values = c("grey", "#619CFF")) +
+  theme_minimal()
 
 ```
 
