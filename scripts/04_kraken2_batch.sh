@@ -6,22 +6,22 @@
 #SBATCH --array=1-6
 #SBATCH --output=kraken_%A_%a.out
 
-#Load necessary modules
+#load necessary modules
 module load kraken2
 
-#Set database paths
+#set database paths
 DB_SRC=$SCRATCH/kraken_db
 DB_RAM=/dev/shm/kraken_db
 
-#Set file paths
+#set file paths
 FASTQ=$SCRATCH/fastq_files
 OUT=$SCRATCH/kraken_output
 SAMPLE_LIST=$SCRATCH/sra_download/srr_ids.txt
 
-#Generate output directory
+#generate output directory
 mkdir -p "$OUT"
 
-#Split work across array tasks
+#split work across array tasks
 TOTAL_SAMPLES=$(wc -l < $SAMPLE_LIST)
 TASKS=6
 
@@ -32,14 +32,15 @@ END=$(( SLURM_ARRAY_TASK_ID * SAMPLES_PER_TASK ))
 
 echo "Task $SLURM_ARRAY_TASK_ID processing samples $START to $END"
 
-#Copy the Kraken2 database to RAM (ONCE PER JOB)
+#copy the Kraken2 database to RAM (1x per job)
 echo "Copying Kraken2 DB to RAM..."
 mkdir -p $DB_RAM
 rsync -a --info=progress2 $DB_SRC/ $DB_RAM/
 echo "DB ready"
 
-#Process multiple samples per array
-#Define if/else statements for paired and the single-end read (73 paired, 1 single end)
+#process multiple samples per array
+#define if/else statements for paired and the single-end read (73 paired, 1 single end)
+#run kraken2 in parallel array
 sed -n "${START},${END}p" $SAMPLE_LIST | while read sample
 do
     echo "Processing sample: $sample"
