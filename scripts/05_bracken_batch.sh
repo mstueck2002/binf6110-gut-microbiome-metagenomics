@@ -6,25 +6,25 @@
 #SBATCH --array=1-74%8
 #SBATCH --output=bracken_%A_%a.out
 
-#Load necessary modules
+#load necessary modules
 module load bracken
 
-#Set paths
+#set paths
 REPORT_DIR="$SCRATCH/kraken_reports"
 OUT_DIR="$SCRATCH/bracken_output"
 DB_DIR="$SCRATCH/kraken_kb"
 SAMPLE_LIST="$SCRATCH/sra_download/srr_ids.txt"
 
-#Generate output directory
+#generate output directory
 mkdir -p "$OUT_DIR"
 
-#Get the sample ID for this array task
+#get the sample ID for this array task
 sample=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$SAMPLE_LIST")
 
-#Define input report file
+#define input report file
 REPORT_FILE="${REPORT_DIR}/${sample}.report"
 
-#Run Bracken
+#run Bracken
 bracken \
   -d "$DB_DIR" \
   -i "$REPORT_FILE" \
