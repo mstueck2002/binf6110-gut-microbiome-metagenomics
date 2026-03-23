@@ -5,13 +5,13 @@
 #SBATCH --time=00:15:00
 #SBATCH --output=bracken_combine.out
 
-#Load necessary modules
+#load necessary modules
 module load bracken
 
-#Set paths
+#set paths
 OUTPUT_DIR="$SCRATCH/bracken_output"
 
-#Run combine_bracken_outputs.py
+#run combine_bracken_outputs.py on bracken outputs
 python $EBROOTBRACKEN/analysis_scripts/combine_bracken_outputs.py \
   --files "$OUTPUT_DIR"/*.bracken \
   -o $SCRATCH/species_abundance_matrix.txt
