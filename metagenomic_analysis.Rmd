@@ -18,7 +18,6 @@ library(tidyverse)
 library(ANCOMBC)
 library(ggplot2)
 library(readxl)
-library(picante)
 library(biomformat)
 library(microbiome)
 ```
