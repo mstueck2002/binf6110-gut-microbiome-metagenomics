@@ -1,0 +1,253 @@
+---
+title: "A3"
+author: "Madelin Stueck"
+date: "2026-03-09"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###load necessary libraries
+
+```{r}
+library(phyloseq)
+library(vegan)
+library(tidyverse)
+library(ANCOMBC)
+library(ggplot2)
+library(readxl)
+library(picante)
+library(biomformat)
+library(microbiome)
+```
+
+###data import
+
+```{r}
+#import biom
+biom_data <- read_biom("bracken.biom")
+physeq <- import_biom(biom_data)
+
+#import metadata
+meta <- read_excel("diet_metadata.xlsx")
+meta <- as.data.frame(meta)
+colnames(meta) <- c("Sample", "Diet")
+rownames(meta) <- meta$Sample
+
+#remove sample names suffix
+sample_names(physeq) <- gsub("_bracken_species$", "", sample_names(physeq))
+
+#reorder metadata to match phyloseq
+metadata <- meta[sample_names(physeq), ]
+
+#assign meta data diet groups to physeq
+sample_data(physeq) <- sample_data(metadata)
+
+#Rarefaction
+otu_mat <- as.data.frame(t(otu_table(physeq)))
+#rarecurve(otu_mat, step = 5000, label = FALSE)
+
+```
+
+
+###Total taxonomic abundance
+
+```{r}
+#Convert to relative abundance
+physeq_rel <- transform_sample_counts(physeq, function(x) x / sum(x))
+
+#Specify phylum level for plotting
+physeq_phy <- tax_glom(physeq_rel, taxrank = "Rank2")
+
+#Identify top 10 phyla
+top10 <- names(sort(taxa_sums(physeq_phy), decreasing = TRUE))[1:10]
+
+#Label all other phyla as "Other"
+tax_table(physeq_phy)[, "Rank2"] <- ifelse(
+  taxa_names(physeq_phy) %in% top10,
+  as.character(tax_table(physeq_phy)[, "Rank2"]),
+  "Other"
+)
+
+#Merge to collapse all "Other" into one group
+physeq_top <- tax_glom(physeq_phy, taxrank = "Rank2")
+
+#Convert to long format
+df <- psmelt(physeq_top)
+
+#Remove phylum prefix 'p_'
+df$Rank2 <- gsub("^p__", "", df$Rank2)
+
+#Plot
+ggplot(df, aes(x = Sample, y = Abundance, fill = Rank2)) + 
+  geom_bar(stat = "identity", position = "stack") + 
+  labs(
+    y = "Relative Abundance",
+    x = "Sample",
+    fill = "Top 10 Phyla (Relative Abundance)"
+  ) +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+
+```
+
+###Taxonomic abundance by Diet
+
+```{r}
+#group phylum abundance by Diet and average
+phylum_diet <- df %>%
+  group_by(Diet, Rank2) %>%
+  summarise(Abundance = mean(Abundance), .groups = "drop")
+
+#Plot
+ggplot(phylum_diet, aes(x = Diet, y = Abundance, fill = Rank2)) + 
+  geom_bar(stat = "identity", position = "stack") + 
+  labs(
+    y = "Mean Relative Abundance",
+    x = "Diet",
+    fill = "Top 10 Phyla by Diet"
+  ) +
+  theme_bw()
+
+```
+
+###alpha diversity analysis
+
+```{r}
+#plot all alpha diversity measures
+plot_richness(physeq, measures = c("Chao1", "ACE","Simpson","Shannon"), x = "Diet", color = "Diet") +
+  geom_boxplot(alpha = 0.7) +
+  geom_jitter(width = 0.2, size = 2, alpha = 0.8) +
+  theme_bw() +
+  labs(
+    x = "Diet",
+    y = "Alpha Diversity",
+    color = "Diet"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#extract measures
+alpha_df <- estimate_richness(physeq)
+alpha_df$Diet <- sample_data(physeq)$Diet
+
+#CHAO1 and SHANNON - richness and information/entropy 
+#get summary stats by diet
+alpha_summary <- alpha_df %>%
+  group_by(Diet) %>%
+  summarise(
+    Chao1_mean = mean(Chao1),
+    Chao1_sd = sd(Chao1),
+    ACE_mean = mean(ACE),
+    ACE_sd = sd(ACE),
+    Simpson_mean = mean(Simpson),
+    Simpson_sd = sd(Simpson),
+    Shannon_mean = mean(Shannon),
+    Shannon_sd = sd(Shannon)
+  )
+
+
+#Calculate dominance indices
+dom <- dominance(physeq, index = "all")
+
+#extract Berger-Parker (DBP)
+bp_index <- dominance(physeq, index = "dbp")
+
+#convert to data frame
+bp_df <- data.frame(
+  Sample = names(bp_index),
+  Dominance = bp_index
+)
+
+#add diet metadata
+bp_df$Diet <- sample_data(physeq)$Diet
+
+#Get mean dominance by diet
+bp_diet <- bp_df %>%
+  group_by(Diet) %>%
+  summarise(
+    mean_dominance = mean(dbp),
+    sd_dominance = sd(dbp)
+  )
+
+```
+
+
+###beta diversity analysis
+
+```{r}
+#filter noise from rare taxa
+physeq_filt <- prune_taxa(taxa_sums(physeq) > 10, physeq)
+
+#Bray–Curtis distance - abundance
+bray_dist <- distance(physeq_filt, method = "bray")
+
+#ordinate for visualization
+ord_bray <- ordinate(physeq_filt, method = "PCoA", distance = bray_dist)
+
+#plot PCoA
+plot_ordination(physeq_filt, ord_bray, color = "Diet") +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(title = "Bray-Curtis PCoA")
+
+#convert to presence or absence
+physeq_pa <- transform_sample_counts(physeq_filt, function(x) ifelse(x > 0, 1, 0))
+
+#Jaccard distance (presence/absence)
+jaccard_dist <- distance(physeq_pa, method = "jaccard")
+
+#ordinate for visualization
+ord_jaccard <- ordinate(physeq_pa, method = "PCoA", distance = jaccard_dist)
+
+#plot PCoA
+plot_ordination(physeq_pa, ord_jaccard, color = "Diet") +
+  geom_point(size = 3) +
+  theme_bw() +
+  labs(title = "Jaccard PCoA")
+
+#Perform statistical testing on distances between diets
+metadata <- as(sample_data(physeq_filt), "data.frame")
+
+#PERMANOVA (adonis)
+adonis2(phyloseq::distance(physeq_filt, method = "bray") ~ Diet, data = metadata)
+adonis2(phyloseq::distance(physeq_filt, method = "jaccard") ~ Diet, data = metadata)
+```
+
+###differential abundance analysis
+
+```{r}
+#ANCOM-BC for 
+ancombc.out <- ancombc2(
+  data = physeq, 
+  tax_level = "Rank6", 
+  fix_formula = "Diet", 
+  rand_formula = NULL,
+  p_adj_method = "holm", 
+  pseudo_sens = TRUE, 
+  prv_cut = 0.1, 
+  lib_cut = 1000, 
+  s0_perc = 0.05, 
+  group = "Diet", 
+  struc_zero = TRUE, 
+  neg_lb = TRUE
+)
+
+ancombc.out$zero_ind
+```
+
+```{r}
+#identify significant taxa in vegan compared to omnivore
+sig_vegan <- ancombc.out$res %>%
+  filter(q_Dietvegan < 0.05) %>%
+  select(taxon, lfc_Dietvegan, p_Dietvegan, q_Dietvegan)
+
+#identify significant taxa in vegetarian compared to omnivore
+sig_vegetarian<- ancombc.out$res %>%
+  filter(q_Dietvegetarian < 0.05) %>%
+  select(taxon, lfc_Dietvegetarian, p_Dietvegetarian, q_Dietvegetarian)
+
+```
+
+

@@ -1,0 +1,21 @@
+# R
+.RData
+.RDataTmp*
+.DS_Store
+
+# Bioinformatics outputs
+salmon_output/
+salmon_index/
+blast_output/
+
+# Databases
+*.phr
+*.pin
+*.psq
+*.pdb
+*.ptf
+
+# Misc binaries
+*.bin
+*.json
+
